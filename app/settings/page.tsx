@@ -3,6 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { deepgramSettingsSchema, type DeepgramSettings } from '@/lib/deepgram-settings';
+import type {
+	DeepgramSettingsGetResponse,
+	DeepgramSettingsUpdateRequest,
+} from '@/types/api';
 
 export default function SettingsPage() {
 	const { data: session } = useSession();
@@ -16,7 +20,7 @@ export default function SettingsPage() {
 		setLoading(true);
 		void fetch('/api/settings/deepgram', { cache: 'no-store' })
 			.then((r) => r.json())
-			.then((s) => setSettings(s ?? {}))
+			.then((s: DeepgramSettingsGetResponse) => setSettings(s ?? {}))
 			.finally(() => setLoading(false));
 	}, [session?.user]);
 
@@ -51,7 +55,7 @@ export default function SettingsPage() {
 		const res = await fetch('/api/settings/deepgram', {
 			method: 'PATCH',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(parsed.data),
+			body: JSON.stringify(parsed.data satisfies DeepgramSettingsUpdateRequest),
 		});
 		setSaving(false);
 		if (res.ok) {

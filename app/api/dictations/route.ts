@@ -2,11 +2,21 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
- 
+import type {
+	ApiErrorResponse,
+	DictationsListResponse,
+	DictationCreateRequest,
+	DictationCreateResponse,
+	DictationItem,
+} from '@/types/api';
 
-export async function GET(req: Request) {
+export async function GET(
+	req: Request
+): Promise<NextResponse<DictationsListResponse | ApiErrorResponse>> {
 	const session = await auth();
-	if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+	if (!session?.user?.id) {
+		return NextResponse.json<ApiErrorResponse>({ error: 'Unauthorized' }, { status: 401 });
+	}
 	const url = new URL(req.url);
 	const page = Math.max(0, Number(url.searchParams.get('page') ?? 0) || 0);
 	const limitRaw = Number(url.searchParams.get('limit') ?? 10) || 10;
@@ -19,7 +29,11 @@ export async function GET(req: Request) {
 	});
 	const total = await prisma.dictation.count({ where: { userId: session.user.id } });
 	const hasMore = (page + 1) * limit < total;
-	return NextResponse.json({ items: dictations, hasMore });
+	// NextResponse.json() serializes Date to string automatically
+	return NextResponse.json<DictationsListResponse>(
+		{ items: dictations as unknown as DictationItem[], hasMore },
+		{ status: 200 }
+	);
 }
 
 const dictationCreateSchema = z.object({
@@ -27,13 +41,17 @@ const dictationCreateSchema = z.object({
 	durationSec: z.number().int().min(0),
 });
 
-export async function POST(req: Request) {
+export async function POST(
+	req: Request
+): Promise<NextResponse<DictationCreateResponse | ApiErrorResponse>> {
 	const session = await auth();
-	if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+	if (!session?.user?.id) {
+		return NextResponse.json<ApiErrorResponse>({ error: 'Unauthorized' }, { status: 401 });
+	}
 	const body = await req.json().catch(() => ({}));
 	const parsed = dictationCreateSchema.safeParse(body);
 	if (!parsed.success) {
-		return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
+		return NextResponse.json<ApiErrorResponse>({ error: 'Invalid input' }, { status: 400 });
 	}
 	const created = await prisma.dictation.create({
 		data: {
@@ -42,6 +60,9 @@ export async function POST(req: Request) {
 			durationSec: parsed.data.durationSec,
 		},
 	});
-	return NextResponse.json(created, { status: 201 });
+	// NextResponse.json() serializes Date to string automatically
+	return NextResponse.json<DictationCreateResponse>(created as unknown as DictationItem, {
+		status: 201,
+	});
 }
 

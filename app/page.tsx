@@ -1,9 +1,8 @@
-'use client';
+import {auth} from '@/auth';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
 
-export default function HomePage() {
-	const { data: session } = useSession();
+export default async function HomePage() {
+	const session = await auth();
 	return (
 		<main className="min-h-screen flex items-center justify-center">
 			<div className="text-center">

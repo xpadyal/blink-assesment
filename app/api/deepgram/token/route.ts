@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
+import type {
+	DeepgramTokenResponse,
+	DeepgramTokenErrorResponse,
+} from '@/types/api';
 
-async function createEphemeralKey(sessionUserId: string | undefined) {
+async function createEphemeralKey(
+	sessionUserId: string | undefined
+): Promise<DeepgramTokenResponse | DeepgramTokenErrorResponse> {
 	const apiKey = process.env.DEEPGRAM_API_KEY;
 	const projectId = process.env.DEEPGRAM_PROJECT_ID;
 	if (!apiKey || !projectId) {
@@ -35,7 +41,7 @@ async function createEphemeralKey(sessionUserId: string | undefined) {
 			statusText: res.statusText,
 			body: txt,
 		});
-		return { error: `Failed: ${txt}`, status: res.status };
+		return { error: `Failed: ${txt}` };
 	}
 	const json = await res.json();
 	console.log('[deepgram/token] Ephemeral key created', {
@@ -45,27 +51,37 @@ async function createEphemeralKey(sessionUserId: string | undefined) {
 	return { key: json?.key as string, ttl: 60 as const };
 }
 
-export async function GET() {
+export async function GET(): Promise<
+	NextResponse<DeepgramTokenResponse | DeepgramTokenErrorResponse>
+> {
 	const session = await auth();
 	if (!session?.user?.id) {
 		console.warn('[deepgram/token] Unauthorized request');
-		return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+		return NextResponse.json<DeepgramTokenErrorResponse>(
+			{ error: 'Unauthorized' },
+			{ status: 401 }
+		);
 	}
 
 	try {
 		const result = await createEphemeralKey(session.user.id);
 		if ('error' in result) {
 			console.error('[deepgram/token] Failed to create ephemeral key', { error: result.error });
-			const status = 'status' in result && typeof result.status === 'number' ? result.status : 500;
-			return NextResponse.json({ error: result.error }, { status });
+			return NextResponse.json<DeepgramTokenErrorResponse>(
+				{ error: result.error },
+				{ status: 500 }
+			);
 		}
 		console.log('[deepgram/token] Returning ephemeral key result');
-		return NextResponse.json(result);
+		return NextResponse.json<DeepgramTokenResponse>(result);
 	} catch (e) {
 		console.error('[deepgram/token] Unexpected error', {
 			message: e instanceof Error ? e.message : String(e),
 		});
-		return NextResponse.json({ error: 'Deepgram error' }, { status: 502 });
+		return NextResponse.json<DeepgramTokenErrorResponse>(
+			{ error: 'Deepgram error' },
+			{ status: 502 }
+		);
 	}
 }
 

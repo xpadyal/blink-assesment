@@ -6,13 +6,18 @@ import data from '@emoji-mart/data';
 import { useSession } from 'next-auth/react';
 import { TranscriptMerger } from '@/lib/merge';
 import { buildListenQuery, type DeepgramSettings } from '@/lib/deepgram-settings';
-
-type DictationItem = {
-	id: string;
-	text: string;
-	createdAt: string;
-	durationSec: number;
-};
+import type {
+	DictationItem,
+	DictationsListResponse,
+	DictationCreateRequest,
+	DictationAppendEmojiRequest,
+	DictationUpdateResponse,
+	DeepgramTokenResponse,
+	ApiErrorResponse,
+} from '@/types/api';
+import { isDeepgramTokenResponse } from '@/types/api';
+import { DictationHistory } from '@/components/DictationHistory';
+import { Toast } from '@/components/Toast';
 
 export default function DictationPage() {
 	const { data: session } = useSession();
@@ -43,6 +48,14 @@ export default function DictationPage() {
 		void loadPage(0, true);
 	}, [session?.user]);
 
+	useEffect(() => {
+		return () => {
+			mediaRecorderRef.current?.stop();
+			mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
+			wsRef.current?.close();
+		};
+	}, []);
+
 	async function loadPage(nextPage: number, replace = false) {
 		if (replace) setInitialLoading(true);
 		else setLoadingMore(true);
@@ -52,7 +65,7 @@ export default function DictationPage() {
 			setLoadingMore(false);
 			return;
 		}
-		const json = (await res.json()) as { items: DictationItem[]; hasMore: boolean };
+		const json = (await res.json()) as DictationsListResponse;
 		setHasMore(json.hasMore);
 		setPage(nextPage);
 		if (replace) {
@@ -65,6 +78,7 @@ export default function DictationPage() {
 	}
 
 	const start = async () => {
+		if (isRecording) return;
 		setFinalText(null);
 		setLiveText('');
 		setTextValue('');
@@ -77,8 +91,10 @@ export default function DictationPage() {
 			userSettingsRef.current = {};
 		}
 		// fetch ephemeral key
-		const t = await fetch('/api/deepgram/token').then((r) => r.json());
-		if (!t?.key) {
+		const t = (await fetch('/api/deepgram/token').then((r) => r.json())) as
+			| DeepgramTokenResponse
+			| ApiErrorResponse;
+		if (!isDeepgramTokenResponse(t)) {
 			alert('Deepgram not configured');
 			return;
 		}
@@ -167,10 +183,10 @@ export default function DictationPage() {
 		const res = await fetch('/api/dictations', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ text, durationSec }),
+			body: JSON.stringify({ text, durationSec } satisfies DictationCreateRequest),
 		});
 		if (res.ok) {
-			const created = await res.json();
+			const created = (await res.json()) as DictationItem;
 			setItems((prev) => [created, ...prev]);
 			setFinalText(null);
 			setLiveText('');
@@ -219,10 +235,13 @@ export default function DictationPage() {
 		const res = await fetch(`/api/dictations/${id}`, {
 			method: 'PATCH',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ action: 'append_emoji', emoji }),
+			body: JSON.stringify({
+				action: 'append_emoji',
+				emoji,
+			} satisfies DictationAppendEmojiRequest),
 		});
 		if (res.ok) {
-			const updated = await res.json();
+			const updated = (await res.json()) as DictationUpdateResponse;
 			setItems((prev) => prev.map((x) => (x.id === id ? updated : x)));
 		}
 		setShowPicker(false);
@@ -330,49 +349,15 @@ export default function DictationPage() {
 					Clear
 				</button>
 			</div>
-			<div className="space-y-3">
-				<h2 className="text-lg font-medium">History</h2>
-				{initialLoading ? (
-					<p className="text-sm text-gray-500">Loading...</p>
-				) : items.length === 0 ? (
-					<p className="text-sm text-gray-500">No dictations yet.</p>
-				) : (
-					<ul className="space-y-2">
-						{items.map((d) => (
-							<li key={d.id} className="group border rounded p-3 flex items-start justify-between">
-								<p className="text-sm text-gray-800 whitespace-pre-wrap pr-3">{d.text}</p>
-								<div className="flex items-center gap-2">
-									<button
-										onClick={() => onCopy(d.text)}
-										className="opacity-0 group-hover:opacity-100 transition text-xs border rounded px-2 py-1"
-										title="Copy"
-										aria-label="Copy dictation"
-									>
-										Copy
-									</button>
-								</div>
-							</li>
-						))}
-					</ul>
-				)}
-				{hasMore && (
-					<div>
-						<button
-							onClick={() => loadPage(page + 1)}
-							className="border rounded px-3 py-1"
-							disabled={loadingMore}
-							aria-label="Load more dictations"
-						>
-							{loadingMore ? 'Loading…' : 'Load more'}
-						</button>
-					</div>
-				)}
-			</div>
-			{toast && (
-				<div className="fixed bottom-4 right-4 bg-black text-white text-sm rounded px-3 py-2 shadow">
-					{toast}
-				</div>
-			)}
+			<DictationHistory
+				items={items}
+				initialLoading={initialLoading}
+				loadingMore={loadingMore}
+				hasMore={hasMore}
+				onCopy={onCopy}
+				onLoadMore={() => loadPage(page + 1)}
+			/>
+			{toast && <Toast message={toast} />}
 		</main>
 	);
 }

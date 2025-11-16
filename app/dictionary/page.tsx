@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from 'react';
 
-type Entry = {
-	id: string;
-	phrase: string;
-	weight: number;
-	createdAt: string;
-};
+import type {
+	DictionaryEntryItem as Entry,
+	DictionaryListResponse,
+	DictionaryCreateRequest,
+	DictionaryUpdateRequest,
+} from '@/types/api';
 
 export default function DictionaryPage() {
 	const [entries, setEntries] = useState<Entry[]>([]);
@@ -16,7 +16,10 @@ export default function DictionaryPage() {
 
 	const load = async () => {
 		const r = await fetch('/api/dictionary');
-		if (r.ok) setEntries(await r.json());
+		if (r.ok) {
+			const data = (await r.json()) as DictionaryListResponse;
+			setEntries(data);
+		}
 	};
 
 	useEffect(() => {
@@ -28,7 +31,10 @@ export default function DictionaryPage() {
 		const r = await fetch('/api/dictionary', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ phrase: phrase.trim(), weight }),
+			body: JSON.stringify({
+				phrase: phrase.trim(),
+				weight,
+			} satisfies DictionaryCreateRequest),
 		});
 		if (r.ok) {
 			setPhrase('');
@@ -37,7 +43,7 @@ export default function DictionaryPage() {
 		}
 	};
 
-	const update = async (id: string, data: Partial<Pick<Entry, 'phrase' | 'weight'>>) => {
+	const update = async (id: string, data: DictionaryUpdateRequest) => {
 		const r = await fetch(`/api/dictionary/${id}`, {
 			method: 'PUT',
 			headers: { 'Content-Type': 'application/json' },
