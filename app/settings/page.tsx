@@ -94,7 +94,7 @@ export default function SettingsPage() {
 								}}
 								disabled={!settings.utterances}
 							/>
-							<LabeledInput label="Keyterms (comma separated)" hint="Boost recognition of important phrases." value={(settings.keyterm ?? []).join(', ')} onChange={(v) => setSettings((s) => ({ ...s, keyterm: v ? v.split(',').map((x) => x.trim()).filter(Boolean) : undefined }))} />
+							<LabeledInput label="Keyterms (comma separated)" hint="Boost recognition of important phrases. Dictionary entries are automatically included when dictating." value={(settings.keyterm ?? []).join(', ')} onChange={(v) => setSettings((s) => ({ ...s, keyterm: v ? v.split(',').map((x) => x.trim()).filter(Boolean) : undefined }))} />
 							<LabeledInput label="Find & replace (find:replace, comma separated)" hint="Replace matched terms in transcript." value={(settings.replace ?? []).join(', ')} onChange={(v) => setSettings((s) => ({ ...s, replace: v ? v.split(',').map((x) => x.trim()).filter(Boolean) : undefined }))} />
 						</div>
 					</section>

@@ -14,6 +14,8 @@ import type {
 	DictationUpdateResponse,
 	DeepgramTokenResponse,
 	ApiErrorResponse,
+	DictionaryEntryItem,
+	DictionaryListResponse,
 } from '@/types/api';
 import { isDeepgramTokenResponse } from '@/types/api';
 import { DictationHistory } from '@/components/DictationHistory';
@@ -89,6 +91,29 @@ export default function DictationPage() {
 			userSettingsRef.current = s ?? {};
 		} catch {
 			userSettingsRef.current = {};
+		}
+		// fetch dictionary entries and merge with keyterms
+		try {
+			const dictRes = await fetch('/api/dictionary', { cache: 'no-store' });
+			if (dictRes.ok) {
+				const dictEntries = (await dictRes.json()) as DictionaryEntryItem[];
+				// Sort by weight (descending) to prioritize higher-weighted phrases
+				const sortedEntries = [...dictEntries].sort((a, b) => b.weight - a.weight);
+				const dictPhrases = sortedEntries
+					.map((e) => e.phrase.trim())
+					.filter((p) => p.length > 0 && p.length <= 64); // Deepgram keyterm max length is 64
+				// merge with existing keyterms, remove duplicates, limit to 100 (Deepgram limit)
+				const existingKeyterms = userSettingsRef.current?.keyterm ?? [];
+				const merged = Array.from(new Set([...existingKeyterms, ...dictPhrases])).slice(0, 100);
+				if (merged.length > 0) {
+					userSettingsRef.current = {
+						...userSettingsRef.current,
+						keyterm: merged,
+					};
+				}
+			}
+		} catch {
+			// ignore dictionary fetch errors, continue with settings only
 		}
 		// fetch ephemeral key
 		const t = (await fetch('/api/deepgram/token').then((r) => r.json())) as
