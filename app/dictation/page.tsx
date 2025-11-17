@@ -20,6 +20,9 @@ import type {
 import { isDeepgramTokenResponse } from '@/types/api';
 import { DictationHistory } from '@/components/DictationHistory';
 import { Toast } from '@/components/Toast';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Card } from '@/components/ui/card';
 
 export default function DictationPage() {
 	const { data: session } = useSession();
@@ -320,36 +323,37 @@ export default function DictationPage() {
 		<main className="max-w-3xl mx-auto p-6 space-y-6">
 			<div className="flex items-center justify-between">
 				<h1 className="text-2xl font-semibold">Dictation</h1>
-				<button
+				<Button
 					onClick={isRecording ? stop : start}
-					className={`rounded-full px-4 py-2 text-white ${isRecording ? 'bg-red-600' : 'bg-black'}`}
+					variant={isRecording ? 'destructive' : 'default'}
+					size="lg"
+					className="rounded-full"
 				>
 					{isRecording ? 'Stop' : 'Start'}
-				</button>
+				</Button>
 			</div>
-			<div className="relative">
-				<div className="min-h-[120px] border rounded p-0">
-					<textarea
-						ref={textareaRef}
-						className="w-full h-40 resize-vertical outline-none p-4"
-						placeholder="Dictation will appear here. You can edit before saving."
-						value={textValue}
-						onChange={(e) => {
-							setTextValue(e.target.value);
-							mergerRef.current.updatePartial(e.target.value);
-						}}
-						aria-label="Dictation text"
-					/>
-				</div>
+			<Card className="relative">
+				<Textarea
+					ref={textareaRef}
+					className="min-h-[160px] resize-vertical"
+					placeholder="Dictation will appear here. You can edit before saving."
+					value={textValue}
+					onChange={(e) => {
+						setTextValue(e.target.value);
+						mergerRef.current.updatePartial(e.target.value);
+					}}
+					aria-label="Dictation text"
+				/>
 				<div className="absolute bottom-2 right-2">
-					<button
+					<Button
 						onClick={() => setShowPicker((v) => !v)}
-						className="border rounded px-2 py-1 text-xs bg-white"
+						variant="outline"
+						size="sm"
 						title="Insert emoji"
 						aria-label="Insert emoji"
 					>
 						😊
-					</button>
+					</Button>
 					{showPicker && (
 						<div ref={pickerContainerRef} className="absolute right-0 top-full mt-2 z-10">
 							<Picker
@@ -365,19 +369,18 @@ export default function DictationPage() {
 						</div>
 					)}
 				</div>
-			</div>
+			</Card>
 			<div className="flex items-center gap-2">
-				<button
+				<Button
 					onClick={onSave}
 					disabled={textValue.trim().length === 0}
-					className="border rounded px-3 py-1 disabled:opacity-50"
 					aria-label="Save dictation"
 				>
 					Save
-				</button>
-				<button onClick={onClear} className="border rounded px-3 py-1" aria-label="Clear dictation">
+				</Button>
+				<Button onClick={onClear} variant="outline" aria-label="Clear dictation">
 					Clear
-				</button>
+				</Button>
 			</div>
 			<DictationHistory
 				items={items}

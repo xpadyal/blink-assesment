@@ -1,6 +1,8 @@
 'use client';
 
 import type { DictationItem } from '@/types/api';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface DictationHistoryProps {
 	items: DictationItem[];
@@ -23,38 +25,40 @@ export function DictationHistory({
 		<div className="space-y-3">
 			<h2 className="text-lg font-medium">History</h2>
 			{initialLoading ? (
-				<p className="text-sm text-gray-500">Loading...</p>
+				<p className="text-sm text-muted-foreground">Loading...</p>
 			) : items.length === 0 ? (
-				<p className="text-sm text-gray-500">No dictations yet.</p>
+				<p className="text-sm text-muted-foreground">No dictations yet.</p>
 			) : (
 				<ul className="space-y-2">
 					{items.map((d) => (
-						<li key={d.id} className="group border rounded p-3 flex items-start justify-between">
-							<p className="text-sm text-gray-800 whitespace-pre-wrap pr-3">{d.text}</p>
-							<div className="flex items-center gap-2">
-								<button
+						<Card key={d.id} className="group">
+							<CardContent className="p-3 flex items-start justify-between">
+								<p className="text-sm whitespace-pre-wrap pr-3 flex-1">{d.text}</p>
+								<Button
 									onClick={() => onCopy(d.text)}
-									className="opacity-0 group-hover:opacity-100 transition text-xs border rounded px-2 py-1"
+									variant="ghost"
+									size="sm"
+									className="opacity-0 group-hover:opacity-100 transition"
 									title="Copy"
 									aria-label="Copy dictation"
 								>
 									Copy
-								</button>
-							</div>
-						</li>
+								</Button>
+							</CardContent>
+						</Card>
 					))}
 				</ul>
 			)}
 			{hasMore && (
 				<div>
-					<button
+					<Button
 						onClick={onLoadMore}
-						className="border rounded px-3 py-1"
+						variant="outline"
 						disabled={loadingMore}
 						aria-label="Load more dictations"
 					>
 						{loadingMore ? 'Loading…' : 'Load more'}
-					</button>
+					</Button>
 				</div>
 			)}
 		</div>

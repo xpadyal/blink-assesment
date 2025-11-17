@@ -7,6 +7,18 @@ import type {
 	DeepgramSettingsGetResponse,
 	DeepgramSettingsUpdateRequest,
 } from '@/types/api';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
 
 export default function SettingsPage() {
 	const { data: session } = useSession();
@@ -70,82 +82,164 @@ export default function SettingsPage() {
 	return (
 		<main className="max-w-3xl mx-auto p-6 space-y-6">
 			<h1 className="text-2xl font-semibold">Settings</h1>
-			{loading ? <p className="text-sm text-gray-500">Loading...</p> : (
+			{loading ? (
+				<p className="text-sm text-muted-foreground">Loading...</p>
+			) : (
 				<div className="space-y-6">
-					<section className="border rounded p-4 space-y-3">
-						<h2 className="font-medium">Transcription</h2>
-						<label className="block">
-							<span className="block text-sm text-gray-700 mb-1">Model</span>
-							<select
-								className="border rounded w-full px-3 py-2"
-								value={settings.model ?? 'nova-2'}
-								onChange={(e) => setSettings((s) => ({ ...s, model: e.target.value as 'nova-2' | 'nova-3' }))}
-							>
-								<option value="nova-2">Nova-2 (faster, no keyterms)</option>
-								<option value="nova-3">Nova-3 (supports keyterms)</option>
-							</select>
-							<p className="text-xs text-gray-500 mt-1">
-								{(settings.model ?? 'nova-2') === 'nova-3'
-									? 'Nova-3 supports keyterms for better recognition of specific phrases.'
-									: 'Nova-2 is faster but does not support keyterms. Switch to Nova-3 to use dictionary entries and keyterms.'}
-							</p>
-						</label>
-						<Toggle label="Smart format" hint="Improves readability (punctuation, formatting for dates, numbers, etc.)." value={!!settings.smart_format} onChange={setFlag('smart_format')} />
-						<Toggle label="Punctuation" hint="Add punctuation and capitalization to the transcript." value={!!settings.punctuate} onChange={setFlag('punctuate')} />
-						<Toggle label="Paragraphs" hint="Not available for live streaming. Use Utterances for natural breaks." value={!!settings.paragraphs} onChange={setParagraphs} disabled />
-						<Toggle label="Utterances" hint="Segment speech by pauses; required for 'Utterance split'." value={!!settings.utterances} onChange={setUtterances} />
-						<Toggle label="Profanity filter" hint="Remove profanity from transcript." value={!!settings.profanity_filter} onChange={setFlag('profanity_filter')} />
-						<div className="grid grid-cols-1 gap-2">
-							<LabeledInput
-								label="Utterance split (ms)"
-								hint="Silence duration used to split utterances (100–5000ms). Requires Utterances."
-								type="number"
-								value={settings.utt_split ?? ''}
-								onChange={(v) => {
-									if (!v) return setSettings((s) => ({ ...s, utt_split: undefined }));
-									const n = Math.round(Number(v));
-									if (Number.isNaN(n)) return;
-									const clamped = Math.max(100, Math.min(5000, n));
-									setSettings((s) => ({ ...s, utt_split: clamped, utterances: true }));
-								}}
-								disabled={!settings.utterances}
+					<Card>
+						<CardHeader>
+							<CardTitle>Transcription</CardTitle>
+						</CardHeader>
+						<CardContent className="space-y-4">
+							<div className="space-y-2">
+								<Label>Model</Label>
+								<Select
+									value={settings.model ?? 'nova-2'}
+									onValueChange={(value) =>
+										setSettings((s) => ({ ...s, model: value as 'nova-2' | 'nova-3' }))
+									}
+								>
+									<SelectTrigger>
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="nova-2">Nova-2 (faster, no keyterms)</SelectItem>
+										<SelectItem value="nova-3">Nova-3 (supports keyterms)</SelectItem>
+									</SelectContent>
+								</Select>
+								<p className="text-xs text-muted-foreground">
+									{(settings.model ?? 'nova-2') === 'nova-3'
+										? 'Nova-3 supports keyterms for better recognition of specific phrases.'
+										: 'Nova-2 is faster but does not support keyterms. Switch to Nova-3 to use dictionary entries and keyterms.'}
+								</p>
+							</div>
+							<Toggle
+								label="Smart format"
+								hint="Improves readability (punctuation, formatting for dates, numbers, etc.)."
+								value={!!settings.smart_format}
+								onChange={setFlag('smart_format')}
 							/>
-							<LabeledInput
-								label="Keyterms (comma separated)"
-								hint={
-									(settings.model ?? 'nova-2') === 'nova-3'
-										? 'Boost recognition of important phrases. Dictionary entries are automatically included when dictating.'
-										: 'Keyterms only work with Nova-3. Switch to Nova-3 to use keyterms and dictionary entries.'
-								}
-								value={(settings.keyterm ?? []).join(', ')}
-								onChange={(v) => setSettings((s) => ({ ...s, keyterm: v ? v.split(',').map((x) => x.trim()).filter(Boolean) : undefined }))}
-								disabled={(settings.model ?? 'nova-2') === 'nova-2'}
+							<Toggle
+								label="Punctuation"
+								hint="Add punctuation and capitalization to the transcript."
+								value={!!settings.punctuate}
+								onChange={setFlag('punctuate')}
 							/>
-							<LabeledInput label="Find & replace (find:replace, comma separated)" hint="Replace matched terms in transcript." value={(settings.replace ?? []).join(', ')} onChange={(v) => setSettings((s) => ({ ...s, replace: v ? v.split(',').map((x) => x.trim()).filter(Boolean) : undefined }))} />
-						</div>
-					</section>
+							<Toggle
+								label="Paragraphs"
+								hint="Not available for live streaming. Use Utterances for natural breaks."
+								value={!!settings.paragraphs}
+								onChange={setParagraphs}
+								disabled
+							/>
+							<Toggle
+								label="Utterances"
+								hint="Segment speech by pauses; required for 'Utterance split'."
+								value={!!settings.utterances}
+								onChange={setUtterances}
+							/>
+							<Toggle
+								label="Profanity filter"
+								hint="Remove profanity from transcript."
+								value={!!settings.profanity_filter}
+								onChange={setFlag('profanity_filter')}
+							/>
+							<div className="grid grid-cols-1 gap-4">
+								<LabeledInput
+									label="Utterance split (ms)"
+									hint="Silence duration used to split utterances (100–5000ms). Requires Utterances."
+									type="number"
+									value={settings.utt_split ?? ''}
+									onChange={(v) => {
+										if (!v) return setSettings((s) => ({ ...s, utt_split: undefined }));
+										const n = Math.round(Number(v));
+										if (Number.isNaN(n)) return;
+										const clamped = Math.max(100, Math.min(5000, n));
+										setSettings((s) => ({ ...s, utt_split: clamped, utterances: true }));
+									}}
+									disabled={!settings.utterances}
+								/>
+								<LabeledInput
+									label="Keyterms (comma separated)"
+									hint={
+										(settings.model ?? 'nova-2') === 'nova-3'
+											? 'Boost recognition of important phrases. Dictionary entries are automatically included when dictating.'
+											: 'Keyterms only work with Nova-3. Switch to Nova-3 to use keyterms and dictionary entries.'
+									}
+									value={(settings.keyterm ?? []).join(', ')}
+									onChange={(v) =>
+										setSettings((s) => ({
+											...s,
+											keyterm: v
+												? v
+														.split(',')
+														.map((x) => x.trim())
+														.filter(Boolean)
+												: undefined,
+										}))
+									}
+									disabled={(settings.model ?? 'nova-2') === 'nova-2'}
+								/>
+								<LabeledInput
+									label="Find & replace (find:replace, comma separated)"
+									hint="Replace matched terms in transcript."
+									value={(settings.replace ?? []).join(', ')}
+									onChange={(v) =>
+										setSettings((s) => ({
+											...s,
+											replace: v
+												? v
+														.split(',')
+														.map((x) => x.trim())
+														.filter(Boolean)
+												: undefined,
+										}))
+									}
+								/>
+							</div>
+						</CardContent>
+					</Card>
 					<div>
-						<button onClick={onSave} className="border rounded px-4 py-2" disabled={saving}>
+						<Button onClick={onSave} disabled={saving}>
 							{saving ? 'Saving…' : 'Save settings'}
-						</button>
+						</Button>
 					</div>
 				</div>
 			)}
-			{toast && <div className="fixed bottom-4 right-4 bg-black text-white text-sm rounded px-3 py-2 shadow">{toast}</div>}
+			{toast && (
+				<div className="fixed bottom-4 right-4 bg-black text-white text-sm rounded px-3 py-2 shadow">
+					{toast}
+				</div>
+			)}
 		</main>
 	);
 }
 
-function Toggle({ label, hint, value, onChange, disabled = false }: { label: string; hint?: string; value: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
+function Toggle({
+	label,
+	hint,
+	value,
+	onChange,
+	disabled = false,
+}: {
+	label: string;
+	hint?: string;
+	value: boolean;
+	onChange: (v: boolean) => void;
+	disabled?: boolean;
+}) {
 	return (
 		<div className="flex items-center justify-between py-1">
 			<div className="flex items-center gap-2">
-				<span>{label}</span>
+				<Label htmlFor={`toggle-${label}`}>{label}</Label>
 				{hint && <Tooltip text={hint} label={`${label} info`} />}
 			</div>
-			<label className="inline-flex items-center">
-				<input type="checkbox" className="h-4 w-4" checked={value} onChange={(e) => onChange(e.target.checked)} disabled={disabled} />
-			</label>
+			<Checkbox
+				id={`toggle-${label}`}
+				checked={value}
+				onCheckedChange={(checked) => onChange(checked === true)}
+				disabled={disabled}
+			/>
 		</div>
 	);
 }
@@ -166,13 +260,18 @@ function LabeledInput({
 	disabled?: boolean;
 }) {
 	return (
-		<label className="block">
-			<span className="block text-sm text-gray-700 mb-1 flex items-center gap-2">
+		<div className="space-y-2">
+			<Label className="flex items-center gap-2">
 				{label}
 				{hint && <Tooltip text={hint} label={`${label} info`} />}
-			</span>
-			<input type={type} className="border rounded w-full px-3 py-2 disabled:bg-gray-50" disabled={disabled} value={value as any} onChange={(e) => onChange(e.target.value)} />
-		</label>
+			</Label>
+			<Input
+				type={type}
+				disabled={disabled}
+				value={value as any}
+				onChange={(e) => onChange(e.target.value)}
+			/>
+		</div>
 	);
 }
 
@@ -191,5 +290,6 @@ function Tooltip({ text, label }: { text: string; label: string }) {
 		</span>
 	);
 }
+
 
 

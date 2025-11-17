@@ -3,6 +3,11 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function SignUpPage() {
 	const [name, setName] = useState('');
@@ -94,88 +99,89 @@ export default function SignUpPage() {
 
 	return (
 		<main className="min-h-screen flex items-center justify-center p-6">
-			<div className="w-full max-w-sm space-y-4">
-				<h1 className="text-2xl font-semibold">Sign up</h1>
-				<form onSubmit={onSubmit} className="space-y-3">
-					<div>
-						<input
-							className={`w-full border rounded px-3 py-2 ${
-								fieldErrors.name ? 'border-red-500' : ''
-							}`}
-							placeholder="Name"
-							type="text"
-							value={name}
-							onChange={(e) => {
-								setName(e.target.value);
-								setFieldErrors((prev) => ({ ...prev, name: undefined }));
-								setError(null);
-							}}
-							required
-						/>
-						{fieldErrors.name && (
-							<p className="text-xs text-red-600 mt-1">{fieldErrors.name}</p>
-						)}
-					</div>
-					<div>
-						<input
-							className={`w-full border rounded px-3 py-2 ${
-								fieldErrors.email ? 'border-red-500' : ''
-							}`}
-							placeholder="Email"
-							type="email"
-							value={email}
-							onChange={(e) => {
-								setEmail(e.target.value);
-								setFieldErrors((prev) => ({ ...prev, email: undefined }));
-								setError(null);
-							}}
-							required
-						/>
-						{fieldErrors.email && (
-							<p className="text-xs text-red-600 mt-1">{fieldErrors.email}</p>
-						)}
-					</div>
-					<div>
-						<input
-							className={`w-full border rounded px-3 py-2 ${
-								fieldErrors.password ? 'border-red-500' : ''
-							}`}
-							placeholder="Password (min. 6 characters)"
-							type="password"
-							value={password}
-							onChange={(e) => {
-								setPassword(e.target.value);
-								setFieldErrors((prev) => ({ ...prev, password: undefined }));
-								setError(null);
-							}}
-							required
-						/>
-						{fieldErrors.password && (
-							<p className="text-xs text-red-600 mt-1">
-								{fieldErrors.password}
-							</p>
-						)}
-					</div>
-					{error && (
-						<div className="bg-red-50 border border-red-200 rounded px-3 py-2">
-							<p className="text-sm text-red-600">{error}</p>
+			<Card className="w-full max-w-sm">
+				<CardHeader>
+					<CardTitle>Sign up</CardTitle>
+					<CardDescription>Create a new account to get started</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<form onSubmit={onSubmit} className="space-y-4">
+						<div className="space-y-2">
+							<Label htmlFor="name">Name</Label>
+							<Input
+								id="name"
+								type="text"
+								placeholder="Name"
+								value={name}
+								onChange={(e) => {
+									setName(e.target.value);
+									setFieldErrors((prev) => ({ ...prev, name: undefined }));
+									setError(null);
+								}}
+								required
+								className={fieldErrors.name ? 'border-destructive' : ''}
+							/>
+							{fieldErrors.name && (
+								<p className="text-xs text-destructive mt-1">{fieldErrors.name}</p>
+							)}
 						</div>
-					)}
-					<button
-						type="submit"
-						disabled={loading}
-						className="w-full bg-black text-white rounded px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-					>
-						{loading ? 'Creating account…' : 'Create account'}
-					</button>
-				</form>
-				<p className="text-sm text-gray-600">
-					Already have an account?{' '}
-					<Link className="underline" href="/auth/signin">
-						Sign in
-					</Link>
-				</p>
-			</div>
+						<div className="space-y-2">
+							<Label htmlFor="email">Email</Label>
+							<Input
+								id="email"
+								type="email"
+								placeholder="Email"
+								value={email}
+								onChange={(e) => {
+									setEmail(e.target.value);
+									setFieldErrors((prev) => ({ ...prev, email: undefined }));
+									setError(null);
+								}}
+								required
+								className={fieldErrors.email ? 'border-destructive' : ''}
+							/>
+							{fieldErrors.email && (
+								<p className="text-xs text-destructive mt-1">{fieldErrors.email}</p>
+							)}
+						</div>
+						<div className="space-y-2">
+							<Label htmlFor="password">Password</Label>
+							<Input
+								id="password"
+								type="password"
+								placeholder="Password (min. 6 characters)"
+								value={password}
+								onChange={(e) => {
+									setPassword(e.target.value);
+									setFieldErrors((prev) => ({ ...prev, password: undefined }));
+									setError(null);
+								}}
+								required
+								className={fieldErrors.password ? 'border-destructive' : ''}
+							/>
+							{fieldErrors.password && (
+								<p className="text-xs text-destructive mt-1">
+									{fieldErrors.password}
+								</p>
+							)}
+						</div>
+						{error && (
+							<Alert variant="destructive">
+								<AlertDescription>{error}</AlertDescription>
+							</Alert>
+						)}
+						<Button type="submit" disabled={loading} className="w-full">
+							{loading ? 'Creating account…' : 'Create account'}
+						</Button>
+					</form>
+					<p className="text-sm text-muted-foreground mt-4 text-center">
+						Already have an account?{' '}
+						<Link className="underline hover:text-foreground" href="/auth/signin">
+							Sign in
+						</Link>
+					</p>
+				</CardContent>
+			</Card>
 		</main>
 	);
 }

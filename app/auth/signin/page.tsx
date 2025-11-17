@@ -4,6 +4,11 @@ import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 function SignInForm() {
 	const router = useRouter();
@@ -74,67 +79,69 @@ function SignInForm() {
 
 	return (
 		<main className="min-h-screen flex items-center justify-center p-6">
-			<div className="w-full max-w-sm space-y-4">
-				<h1 className="text-2xl font-semibold">Sign in</h1>
-				<form onSubmit={onSubmit} className="space-y-3">
-					<div>
-						<input
-							className={`w-full border rounded px-3 py-2 ${
-								emailError ? 'border-red-500' : ''
-							}`}
-							placeholder="Email"
-							type="email"
-							value={email}
-							onChange={(e) => {
-								setEmail(e.target.value);
-								setEmailError(null);
-								setError(null);
-							}}
-							onBlur={(e) => validateEmail(e.target.value)}
-							required
-						/>
-						{emailError && (
-							<p className="text-xs text-red-600 mt-1">{emailError}</p>
+			<Card className="w-full max-w-sm">
+				<CardHeader>
+					<CardTitle>Sign in</CardTitle>
+					<CardDescription>Enter your credentials to access your account</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<form onSubmit={onSubmit} className="space-y-4">
+						<div className="space-y-2">
+							<Label htmlFor="email">Email</Label>
+							<Input
+								id="email"
+								type="email"
+								placeholder="Email"
+								value={email}
+								onChange={(e) => {
+									setEmail(e.target.value);
+									setEmailError(null);
+									setError(null);
+								}}
+								onBlur={(e) => validateEmail(e.target.value)}
+								required
+								className={emailError ? 'border-destructive' : ''}
+							/>
+							{emailError && (
+								<p className="text-xs text-destructive mt-1">{emailError}</p>
+							)}
+						</div>
+						<div className="space-y-2">
+							<Label htmlFor="password">Password</Label>
+							<Input
+								id="password"
+								type="password"
+								placeholder="Password"
+								value={password}
+								onChange={(e) => {
+									setPassword(e.target.value);
+									setError(null);
+								}}
+								required
+							/>
+						</div>
+						{success && (
+							<Alert>
+								<AlertDescription>{success}</AlertDescription>
+							</Alert>
 						)}
-					</div>
-					<div>
-						<input
-							className="w-full border rounded px-3 py-2"
-							placeholder="Password"
-							type="password"
-							value={password}
-							onChange={(e) => {
-								setPassword(e.target.value);
-								setError(null);
-							}}
-							required
-						/>
-					</div>
-					{success && (
-						<div className="bg-green-50 border border-green-200 rounded px-3 py-2">
-							<p className="text-sm text-green-600">{success}</p>
-						</div>
-					)}
-					{error && (
-						<div className="bg-red-50 border border-red-200 rounded px-3 py-2">
-							<p className="text-sm text-red-600">{error}</p>
-						</div>
-					)}
-					<button
-						type="submit"
-						disabled={loading}
-						className="w-full bg-black text-white rounded px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-					>
-						{loading ? 'Signing in…' : 'Sign in'}
-					</button>
-				</form>
-				<p className="text-sm text-gray-600">
-					Don't have an account?{' '}
-					<Link className="underline" href="/auth/signup">
-						Sign up
-					</Link>
-				</p>
-			</div>
+						{error && (
+							<Alert variant="destructive">
+								<AlertDescription>{error}</AlertDescription>
+							</Alert>
+						)}
+						<Button type="submit" disabled={loading} className="w-full">
+							{loading ? 'Signing in…' : 'Sign in'}
+						</Button>
+					</form>
+					<p className="text-sm text-muted-foreground mt-4 text-center">
+						Don't have an account?{' '}
+						<Link className="underline hover:text-foreground" href="/auth/signup">
+							Sign up
+						</Link>
+					</p>
+				</CardContent>
+			</Card>
 		</main>
 	);
 }
@@ -143,10 +150,14 @@ export default function SignInPage() {
 	return (
 		<Suspense fallback={
 			<main className="min-h-screen flex items-center justify-center p-6">
-				<div className="w-full max-w-sm">
-					<h1 className="text-2xl font-semibold">Sign in</h1>
-					<p className="text-gray-600 mt-2">Loading...</p>
-				</div>
+				<Card className="w-full max-w-sm">
+					<CardHeader>
+						<CardTitle>Sign in</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<p className="text-muted-foreground">Loading...</p>
+					</CardContent>
+				</Card>
 			</main>
 		}>
 			<SignInForm />

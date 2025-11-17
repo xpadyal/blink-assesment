@@ -1,5 +1,6 @@
-import {auth} from '@/auth';
+import { auth } from '@/auth';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export default async function HomePage() {
 	const session = await auth();
@@ -7,21 +8,21 @@ export default async function HomePage() {
 		<main className="min-h-screen flex items-center justify-center">
 			<div className="text-center">
 				<h1 className="text-3xl font-semibold">Blink</h1>
-				<p className="text-gray-600 mt-2">AI voice keyboard</p>
+				<p className="text-muted-foreground mt-2">AI voice keyboard</p>
 				{session?.user ? (
 					<div className="mt-6">
-						<Link href="/dictation" className="border rounded px-4 py-2">
-							Start dictating
-						</Link>
+						<Button asChild>
+							<Link href="/dictation">Start dictating</Link>
+						</Button>
 					</div>
 				) : (
 					<div className="mt-6 flex items-center justify-center gap-3">
-						<Link href="/auth/signin" className="border rounded px-4 py-2">
-							Sign in
-						</Link>
-						<Link href="/auth/signup" className="border rounded px-4 py-2">
-							Sign up
-						</Link>
+						<Button asChild variant="outline">
+							<Link href="/auth/signin">Sign in</Link>
+						</Button>
+						<Button asChild>
+							<Link href="/auth/signup">Sign up</Link>
+						</Button>
 					</div>
 				)}
 			</div>
