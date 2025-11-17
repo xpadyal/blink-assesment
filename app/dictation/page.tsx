@@ -88,9 +88,9 @@ export default function DictationPage() {
 		// fetch user deepgram settings once
 		try {
 			const s = await fetch('/api/settings/deepgram', { cache: 'no-store' }).then((r) => r.json());
-			userSettingsRef.current = s ?? {};
+			userSettingsRef.current = { model: 'nova-2', ...(s ?? {}) };
 		} catch {
-			userSettingsRef.current = {};
+			userSettingsRef.current = { model: 'nova-2' };
 		}
 		// fetch dictionary entries and merge with keyterms
 		try {
@@ -102,17 +102,21 @@ export default function DictationPage() {
 				const dictPhrases = sortedEntries
 					.map((e) => e.phrase.trim())
 					.filter((p) => p.length > 0 && p.length <= 64); // Deepgram keyterm max length is 64
-				// merge with existing keyterms, remove duplicates, limit to 100 (Deepgram limit)
-				const existingKeyterms = userSettingsRef.current?.keyterm ?? [];
-				const merged = Array.from(new Set([...existingKeyterms, ...dictPhrases])).slice(0, 100);
+				// merge with existing keyterms, remove duplicates, limit to 50 (schema limit)
+				const existingKeyterms = (userSettingsRef.current?.keyterm ?? []).filter(
+					(k): k is string => typeof k === 'string' && k.length > 0 && k.length <= 64
+				);
+				const merged = Array.from(new Set([...existingKeyterms, ...dictPhrases])).slice(0, 50);
 				if (merged.length > 0) {
 					userSettingsRef.current = {
+						model: userSettingsRef.current?.model ?? 'nova-2',
 						...userSettingsRef.current,
 						keyterm: merged,
 					};
 				}
 			}
-		} catch {
+		} catch (err) {
+			console.warn('[dictation] Failed to fetch dictionary entries', err);
 			// ignore dictionary fetch errors, continue with settings only
 		}
 		// fetch ephemeral key
@@ -125,6 +129,7 @@ export default function DictationPage() {
 		}
 		// open websocket with mapped settings
 		const qs = buildListenQuery(userSettingsRef.current);
+		console.log('[dictation] Opening WebSocket with query:', qs);
 		const ws = new WebSocket(`wss://api.deepgram.com/v1/listen?${qs}`, [
 			'token',
 			t.key,

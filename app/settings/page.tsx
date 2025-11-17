@@ -10,7 +10,7 @@ import type {
 
 export default function SettingsPage() {
 	const { data: session } = useSession();
-	const [settings, setSettings] = useState<DeepgramSettings>({});
+	const [settings, setSettings] = useState<DeepgramSettings>({ model: 'nova-2' });
 	const [loading, setLoading] = useState(false);
 	const [saving, setSaving] = useState(false);
 	const [toast, setToast] = useState<string | null>(null);
@@ -74,6 +74,22 @@ export default function SettingsPage() {
 				<div className="space-y-6">
 					<section className="border rounded p-4 space-y-3">
 						<h2 className="font-medium">Transcription</h2>
+						<label className="block">
+							<span className="block text-sm text-gray-700 mb-1">Model</span>
+							<select
+								className="border rounded w-full px-3 py-2"
+								value={settings.model ?? 'nova-2'}
+								onChange={(e) => setSettings((s) => ({ ...s, model: e.target.value as 'nova-2' | 'nova-3' }))}
+							>
+								<option value="nova-2">Nova-2 (faster, no keyterms)</option>
+								<option value="nova-3">Nova-3 (supports keyterms)</option>
+							</select>
+							<p className="text-xs text-gray-500 mt-1">
+								{(settings.model ?? 'nova-2') === 'nova-3'
+									? 'Nova-3 supports keyterms for better recognition of specific phrases.'
+									: 'Nova-2 is faster but does not support keyterms. Switch to Nova-3 to use dictionary entries and keyterms.'}
+							</p>
+						</label>
 						<Toggle label="Smart format" hint="Improves readability (punctuation, formatting for dates, numbers, etc.)." value={!!settings.smart_format} onChange={setFlag('smart_format')} />
 						<Toggle label="Punctuation" hint="Add punctuation and capitalization to the transcript." value={!!settings.punctuate} onChange={setFlag('punctuate')} />
 						<Toggle label="Paragraphs" hint="Not available for live streaming. Use Utterances for natural breaks." value={!!settings.paragraphs} onChange={setParagraphs} disabled />
@@ -94,7 +110,17 @@ export default function SettingsPage() {
 								}}
 								disabled={!settings.utterances}
 							/>
-							<LabeledInput label="Keyterms (comma separated)" hint="Boost recognition of important phrases. Dictionary entries are automatically included when dictating." value={(settings.keyterm ?? []).join(', ')} onChange={(v) => setSettings((s) => ({ ...s, keyterm: v ? v.split(',').map((x) => x.trim()).filter(Boolean) : undefined }))} />
+							<LabeledInput
+								label="Keyterms (comma separated)"
+								hint={
+									(settings.model ?? 'nova-2') === 'nova-3'
+										? 'Boost recognition of important phrases. Dictionary entries are automatically included when dictating.'
+										: 'Keyterms only work with Nova-3. Switch to Nova-3 to use keyterms and dictionary entries.'
+								}
+								value={(settings.keyterm ?? []).join(', ')}
+								onChange={(v) => setSettings((s) => ({ ...s, keyterm: v ? v.split(',').map((x) => x.trim()).filter(Boolean) : undefined }))}
+								disabled={(settings.model ?? 'nova-2') === 'nova-2'}
+							/>
 							<LabeledInput label="Find & replace (find:replace, comma separated)" hint="Replace matched terms in transcript." value={(settings.replace ?? []).join(', ')} onChange={(v) => setSettings((s) => ({ ...s, replace: v ? v.split(',').map((x) => x.trim()).filter(Boolean) : undefined }))} />
 						</div>
 					</section>
